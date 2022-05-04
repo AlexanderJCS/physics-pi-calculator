@@ -1,10 +1,13 @@
 #include <iostream>
+#include <math.h>
 #include <chrono>
+#include <string>
 
 const unsigned int STEP = 35000;
 const double HITBOX = 49700;
-const int digits = 11;
-const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+const int DIGITS = 11;
+const long double START_VELOCITY = -0.125;  // Needs to be negative
+const std::chrono::steady_clock::time_point START = std::chrono::steady_clock::now();
 
 struct Object
 {
@@ -28,7 +31,7 @@ struct Object
 class Simulation
 {
 	Object smallObject{ 0, 100, 1 };
-	Object largeObject{ -0.125, 50000, pow(100, digits - 1)};
+	Object largeObject{ START_VELOCITY, HITBOX + 200, pow(100, DIGITS - 1)};
 
 	long long bounces = 0;
 
@@ -89,13 +92,15 @@ class Simulation
 
 	void statusUpdate()
 	{
-		double percentCompleted = (bounces / (3.1416 * pow(10, digits - 1))) * 100;
-		std::cout << percentCompleted << "% complete\n";
-
-		//std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		//auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - start).count();
-		//double expectedTime = (1 / (percentCompleted)) * elapsedTime;
-		//std::cout << "Expected time remaining: " << expectedTime << " seconds" << std::endl;
+		double percentCompleted = bounces / (3.1416 * pow(10, DIGITS - 1));
+		
+		std::cout << percentCompleted << "% complete";
+		
+		// Calculate expected time
+		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+		auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - START).count();
+		double expectedTime = (1 / (percentCompleted)) * elapsedTime - elapsedTime;
+		std::cout << " | ETA: " << expectedTime << " seconds\n";
 	}
 
 public:
@@ -125,6 +130,6 @@ int main()
 	
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	
-	std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds" << std::endl;
+	std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::seconds>(end - START).count() << " seconds" << std::endl;
 	return 0;
 }
