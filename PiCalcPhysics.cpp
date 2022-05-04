@@ -4,8 +4,7 @@
 #include <string>
 
 const unsigned int STEP = 35000;
-const double HITBOX = 49700;
-const int DIGITS = 11;
+const int DIGITS = 9;
 const long double START_VELOCITY = -0.125;  // Needs to be negative
 const std::chrono::steady_clock::time_point START = std::chrono::steady_clock::now();
 
@@ -31,7 +30,7 @@ struct Object
 class Simulation
 {
 	Object smallObject{ 0, 100, 1 };
-	Object largeObject{ START_VELOCITY, HITBOX + 200, pow(100, DIGITS - 1)};
+	Object largeObject{ START_VELOCITY, 400, pow(100, DIGITS - 1)};
 
 	long long bounces = 0;
 
@@ -60,21 +59,6 @@ class Simulation
 		largeObject.vel = v2f;
 	}
 
-	void phaseCheck()
-	{
-		if (largeObject.pos <= 0)
-		{
-			std::cout << "WARNING: Large object likely phased through the small object" << std::endl;
-			exit(0);
-		}
-
-		else if (smallObject.pos > largeObject.pos)
-		{
-			std::cout << "WARNING: Small object likely phased through the large object" << std::endl;
-			exit(0);
-		}
-	}
-
 	void collisionCheck()
 	{
 		if (smallObject.pos <= 0)
@@ -83,7 +67,7 @@ class Simulation
 			bounces++;
 		}
 
-		if (abs(smallObject.pos - largeObject.pos) <= HITBOX)
+		if (smallObject.pos >= largeObject.pos)
 		{
 			collision();
 			bounces++;
@@ -94,7 +78,7 @@ class Simulation
 	{
 		double percentCompleted = bounces / (3.1416 * pow(10, DIGITS - 1));
 		
-		std::cout << percentCompleted << "% complete";
+		std::cout << percentCompleted * 100 << "% complete";
 		
 		// Calculate expected time
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
@@ -109,7 +93,6 @@ public:
 		while (abs(smallObject.vel) > largeObject.vel || smallObject.vel < 0 && smallObject.mass != largeObject.mass)
 		{
 			collisionCheck();
-			phaseCheck();
 			smallObject.move();
 			largeObject.move();
 
