@@ -1,11 +1,9 @@
 #include <iostream>
-#include <math.h>
 #include <chrono>
 #include <string>
 
-const unsigned int STEP = 35000;
-const int DIGITS = 9;
-const long double START_VELOCITY = -0.125;  // Needs to be negative
+const int DIGITS = 10;
+const long double START_VELOCITY = -300000;  // Needs to be negative, number doesn't actually matter
 const std::chrono::steady_clock::time_point START = std::chrono::steady_clock::now();
 
 struct Object
@@ -20,11 +18,6 @@ struct Object
 		this->pos = pos;
 		this->mass = mass;
 	}
-
-	void move()
-	{
-		pos += vel / STEP;
-	}
 };
 
 class Simulation
@@ -33,6 +26,7 @@ class Simulation
 	Object largeObject{ START_VELOCITY, 400, pow(100, DIGITS - 1)};
 
 	long long bounces = 0;
+	const long double EXPECTED_BOUNCES = 3.1416 * pow(10, DIGITS - 1);
 
 	void collision()
 	{
@@ -48,7 +42,7 @@ class Simulation
 		long double v2i = largeObject.vel;
 
 		// Use equation 6 from the link
-		long double part1 = ((2 * m1) / (m2 + m1));
+		long double part1 = (2 * m1) / (m2 + m1);
 		long double v2f = ((2 * m1) / (m2 + m1)) * v1i + ((m2 - m1)/(m2 + m1)) * v2i;
 
 		// Use equation 4 from the link
@@ -64,6 +58,7 @@ class Simulation
 		if (smallObject.pos <= 0)
 		{
 			smallObject.vel *= -1;
+			smallObject.pos = 0;
 			bounces++;
 		}
 
@@ -76,15 +71,31 @@ class Simulation
 
 	void statusUpdate()
 	{
-		double percentCompleted = bounces / (3.1416 * pow(10, DIGITS - 1));
+		double percentCompleted = bounces / EXPECTED_BOUNCES;
 		
 		std::cout << percentCompleted * 100 << "% complete";
 		
 		// Calculate expected time
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - START).count();
-		double expectedTime = (1 / (percentCompleted)) * elapsedTime - elapsedTime;
-		std::cout << " | ETA: " << expectedTime << " seconds\n";
+		
+		double expectedTime = elapsedTime / long double(bounces) * EXPECTED_BOUNCES;
+		std::cout << " | ETA: " << expectedTime - elapsedTime << " seconds\n";
+	}
+	
+	long double findInteresctionPoint()
+	{
+		// Find the sum of the two velocities when the two values are positive
+		long double totalVel = abs(largeObject.vel) + abs(smallObject.vel);
+		long double posDiff = largeObject.pos - smallObject.pos;
+		
+		long double time = posDiff / totalVel;
+		return time * largeObject.vel + largeObject.pos;
+	}
+
+	long double findTimeToWall()
+	{
+		return smallObject.pos / abs(smallObject.vel);
 	}
 
 public:
@@ -93,10 +104,22 @@ public:
 		while (abs(smallObject.vel) > largeObject.vel || smallObject.vel < 0 && smallObject.mass != largeObject.mass)
 		{
 			collisionCheck();
-			smallObject.move();
-			largeObject.move();
+			
+			if (smallObject.vel < 0)
+			{
+				long double timeToWall = findTimeToWall();
+				smallObject.pos = timeToWall * smallObject.vel;
+				largeObject.pos = timeToWall * largeObject.vel;
+			}
 
-			if (bounces % 100000000 == 0 && bounces != 0)
+			else
+			{
+				long double intersectionPoint = findInteresctionPoint();
+				smallObject.pos = intersectionPoint;
+				largeObject.pos = intersectionPoint;
+			}
+			
+			if (bounces % 10000001 == 0 && bounces != 0)
 			{
 				statusUpdate();
 			}
