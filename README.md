@@ -8,3 +8,6 @@ https://www.youtube.com/watch?v=jsYwFizhncE&t=0s<br>
 
 <h2>How to use</h2>
 1. Choose the amount of digits of pi you want to calculate by changing the constant digits.<br>
+
+<h2>Notices</h2>
+<b>The program does not work with more than 11 digits because of the 64 bit integer limit.</b>
